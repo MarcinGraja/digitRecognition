@@ -1,9 +1,7 @@
 #include <fstream>
-#include "neuralNet.h"
-#include "neuralLayer.h"
 #include <vector>
 #include <stdexcept>
-
+#include "neuralNet.h"
 neuralNet::neuralNet(std::vector<int> dimensions)
 {
 	if (dimensions.size() < 2)
@@ -17,7 +15,7 @@ neuralNet::neuralNet(std::vector<int> dimensions)
 }
 std::vector <double>neuralNet::run(std::vector <double> data)
 {
-	layers.at(0).setValues(data);
+	layers.at(0).setValues(data, true);
 	for (int i = 1; i < layers.size(); i++)
 	{
 		layers.at(i).updateValues(layers.at(i - 1).getValues());
@@ -30,7 +28,7 @@ void neuralNet::initWeights()
 	{
 		for (int j = 0; j < layers.at(j).size(); j++)
 		{
-			layers.at(i).initWeights(layers.at(i-1).size());
+			layers.at(i).initWeights((int)layers.at(i-1).size());
 		}
 	}
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include "NeuralNet.h"
 #include "train.h"
+#include <vector>
 //image source http://yann.lecun.com/exdb/mnist/
 void debug(std::string Message)
 {
@@ -16,13 +17,12 @@ void debug(std::string Message)
 
 int main()
 {
-	const int inputRows = 28 * 28;
-	const int hiddenLayerRows = 10;
-	const int hiddenLayerColumns = 1;
-	const int outputRows = 10;
+	std::vector<int> dimensions;
+	dimensions.push_back(28 * 28);
+	dimensions.push_back(100);
+	dimensions.push_back(10);
 	int runs = 1;
-	train trainer;
-	trainer.initialize(inputRows, hiddenLayerRows, hiddenLayerColumns, outputRows);
+	train trainer(dimensions);
 	while (runs)
 	{
 		int netsInGeneration;

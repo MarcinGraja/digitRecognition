@@ -25,7 +25,7 @@ void neuralLayer::setWeights(std::vector<std::vector<double>> weights)
 		c.initWeights(count);
 	}
 }
-int neuralLayer::size()
+size_t neuralLayer::size()
 {
 	return layer.size();
 }

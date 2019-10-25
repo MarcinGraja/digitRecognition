@@ -9,9 +9,9 @@ public:
 	void setWeights(std::vector<std::vector<double>> weights);
 	void initWeights(int count);
 	~neuralLayer();
-	int size();
+	size_t size();
 	std::vector<double> getValues();
-	void setValues(std::vector<double> values, bool acceptDifferentSizes = false);
+	void setValues(std::vector<double> values, bool acceptDifferentSizes);
 	void updateValues(std::vector<double> prevValues);
 };
 
