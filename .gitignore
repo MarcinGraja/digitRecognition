@@ -34,3 +34,8 @@ x64/
 *.exe
 *.out
 *.app
+*.nr5~
+*.user
+*.filters
+*.vcxproj
+*.sln
