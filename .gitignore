@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
+
+#directories
 .vs/
+x64/
+
 # Compiled Object files
 *.slo
 *.lo

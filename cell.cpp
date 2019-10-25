@@ -1,59 +1,49 @@
 #include "cell.h"
 #include <random>
 #include <ctime>
+#include <vector>
 
-class cell
+void cell::initWeights(int count)
 {
-	double value = 0;
-	double *multipliers = NULL;
-public:
-	void initMultipliers(int count)
+	if (count == 0) return;
+	weights.reserve(count);
+	for (int i = 0; i < count; i++)
 	{
-		if (count == 0) return;
-		multipliers = new double[count];
-		for (int i = 0; i < count; i++)
-		{
-
-			multipliers[i] = (rand() % 2000 - 1000) / 1000.0;
-		}
+		weights[i] = (rand() % 2000 - 1000) / 1000.0;
 	}
-	void setValue(double value)
+}
+void cell::setValue(double value)
+{
+	this->value = value;
+}
+void cell::updateValue(std::vector <double> previousColumn)
+{
+	value = 0;
+	for (int i = 0; i < weights.size(); i++)
 	{
-		this->value = value;
+		value += previousColumn.at(i) * weights[i];
 	}
-	void updateValue(cell *previousColumn, int count)
+}
+void cell::setWeights(std::vector<double> weights)
+{
+	this->weights = weights;
+}
+std::vector <double> cell::getWeights()
+{
+	return weights;
+}
+void cell::updateWeights(double maxPercentageChange, int count)
+{
+	for (int i = 0; i < count; i++)
 	{
-		value = 0;
-		for (int i = 0; i < count; i++)
-		{
-			value += previousColumn[i].getValue() * multipliers[i];
-		}
+		double absoluteNewValue = rand() % 1000 * maxPercentageChange / 1000.0 / 100 * weights[i] + 0.001;
+		weights[i] = rand() % 2 == 0 ? absoluteNewValue : -absoluteNewValue;
 	}
-	void setMultipliers(double *value, int count)
-	{
-		if (count <= 0) throw std::invalid_argument("prevcount should be >0");
-		for (int i = 0; i < count; i++)
-		{
-			multipliers[i] = value[i];
-		}
-	}
-	double *getMultipliers()
-	{
-		return multipliers;
-	}
-	void updateMultipliers(double maxPercentageChange, int count)
-	{
-		for (int i = 0; i < count; i++)
-		{
-			double absoluteNewValue = rand() % 1000 * maxPercentageChange / 1000.0 / 100 * multipliers[i] + 0.001;
-			multipliers[i] = rand() % 2 == 0 ? absoluteNewValue : -absoluteNewValue;
-		}
-	}
-	double getValue()
-	{
-		return value;
-	}
-};
+}
+double cell::getValue()
+{
+	return value;
+}
 cell::cell()
 {
 }

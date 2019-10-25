@@ -1,5 +1,0 @@
-﻿  NeuralNet.h
-  Source.cpp
-c:\users\marcin\desktop\programowanie\ai\digitrecognition\train.h(14): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-  Generating Code...
-  digitRecognition.vcxproj -> C:\Users\Marcin\Desktop\programowanie\ai\digitRecognition\x64\Debug\digitRecognition.exe

@@ -2,87 +2,38 @@
 #include "neuralNet.h"
 #include "neuralLayer.h"
 #include <vector>
-struct vectorTuple
+#include <stdexcept>
+
+neuralNet::neuralNet(std::vector<int> dimensions)
 {
-	std::vector <int> x;
-	std::vector <int> y;
-};
-class neuralNet
-{
-	std::vector <neuralLayer> layers;
-public:
-	neuralNet(const neuralNet &other) :
+	if (dimensions.size() < 2)
 	{
-		
+		throw std::invalid_argument("Invalid argument; vector specifying dimensions has to have at least size 2. Current size: " + dimensions.size() + '\n');
 	}
-	neuralNet(){};
-	neuralNet(vectorTuple dimensions)
+	for (int i = 0; i < dimensions.size(); i++)
 	{
-		if (dimensions.x.size() != dimensions.y.size() || dimensions.x.size() < 2)
-		{
-			throw 
-		}
+		layers.push_back(neuralLayer(dimensions.at(i)));
 	}
-	~neuralNet()
-	{
-	}
-	double *run(unsigned char *data)
-	{
-		for (int i = 0; i < inputRows; i++)
-		{
-			inputLayer[i].setValue((data[i]));
-		}
-		for (int i = 0; i < hiddenLayerColumns; i++)
-		{
-			for (int j = 0; j < hiddenLayerRows; j++)
-			{
-				hiddenLayer[i][j].updateValue(i == 0 ? inputLayer : hiddenLayer[i - 1]);
-			}
-		}
-		for (int i = 0; i < outputRows; i++)
-		{
-			outputLayer[i].updateValue(hiddenLayer[hiddenLayerColumns - 1]);
-		}
-		double *returned = new double[outputRows] {0};
-		int maxIndex = 0;
-		double maxValue = outputLayer[0].getValue();
-		double sum = 0;
-		for (int i = 0; i < outputRows; i++)
-		{
-			returned[i] = outputLayer[i].getValue();
-			returned[i] > 0 ? returned[i] : 0;
-			sum += returned[i];
-		}
-		if (sum > 0)
-			for (int i = 0; i < outputRows; i++)
-			{
-				returned[i] /= sum;
-				if (returned[i] < 0)
-					continue;
-			}
-		reset();
-		return returned;
-	}
-	void randomizeMultipliers()
-	{
-		for (int i = 0; i < hiddenLayerColumns; i++)
-		{
-			for (int j = 0; j < hiddenLayerRows; j++)
-			{
-				hiddenLayer[i][j].updateMultipliers(5);
-			}
-		}
-		for (int i = 0; i < outputRows; i++)
-		{
-			outputLayer[i].updateMultipliers(5);
-		}
-	}
-};
-neuralNet::neuralNet()
-{
 }
-
-
+std::vector <double>neuralNet::run(std::vector <double> data)
+{
+	layers.at(0).setValues(data);
+	for (int i = 1; i < layers.size(); i++)
+	{
+		layers.at(i).updateValues(layers.at(i - 1).getValues());
+	}
+	return layers.at(layers.size()-1).getValues();
+}
+void neuralNet::initWeights()
+{
+	for (int i = 1; i < layers.size(); i++)
+	{
+		for (int j = 0; j < layers.at(j).size(); j++)
+		{
+			layers.at(i).initWeights(layers.at(i-1).size());
+		}
+	}
+}
 neuralNet::~neuralNet()
 {
 }
