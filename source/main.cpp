@@ -25,13 +25,11 @@ int main()
 	train trainer(dimensions);
 	while (runs)
 	{
-		int netsInGeneration;
-		std::cout << "runs, nets in generation:\n";
+		runs = 1000000;
+		std::cout << "runs:\n";
 		//std::cin >> runs;
+		std::cout << runs;
 		std::cout << "\n";
-		//std::cin >> netsInGeneration;
-		std::cout << "\n";
-		runs = 10000; netsInGeneration = 2;
-		trainer.start(runs, netsInGeneration);
+		trainer.start(runs);
 	}
 }

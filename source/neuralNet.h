@@ -7,7 +7,7 @@ class neuralNet
 public:
 	neuralNet(std::vector<int> dimensions);
 	std::vector<double> run(std::vector<double> data);
-	void initWeights();
+	void backPropagate(std::vector<double> error);
 	~neuralNet();
 };
 

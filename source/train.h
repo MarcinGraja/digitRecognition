@@ -6,5 +6,7 @@ class train
 public:
 	train(std::vector <int> dimensions);
 	~train();
-	void start(int runs, int netsInGeneration);
+	void start(int runs);
 };
+
+std::vector<std::vector<double>> fetchData(std::ifstream & data, int dataSize);

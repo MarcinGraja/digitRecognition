@@ -2,9 +2,18 @@
 #include <vector>
 #include <stdexcept>
 #include <string>
-neuralLayer::neuralLayer(int cellCount)
+neuralLayer::neuralLayer(int cellCount, neuralLayer *prevLayer)
 {
+	this->prevLayer = prevLayer;
 	layer.reserve(cellCount);
+	{
+		for (int i = 0; i < cellCount; i++)
+		{
+			if (prevLayer != nullptr)
+				layer.push_back(cell(prevLayer->size()));
+			else layer.push_back(cell());
+		}
+	}
 }
 neuralLayer::~neuralLayer(){}
 void neuralLayer::setWeights(std::vector<std::vector<double>> weights)
@@ -18,16 +27,9 @@ void neuralLayer::setWeights(std::vector<std::vector<double>> weights)
 		layer.at(i).setWeights(weights.at(i));
 	}
 }
- void neuralLayer::initWeights(int count)
+int neuralLayer::size()
 {
-	for (cell c : layer)
-	{
-		c.initWeights(count);
-	}
-}
-size_t neuralLayer::size()
-{
-	return layer.size();
+	return (int) layer.size();
 }
 std::vector <double> neuralLayer::getValues()
 {
@@ -39,13 +41,12 @@ std::vector <double> neuralLayer::getValues()
 	}
 	return values;
 }
-void neuralLayer::setValues(std::vector<double> values, bool acceptDifferentSizes = false)
+double neuralLayer::getValue(int i)
 {
-	if (!acceptDifferentSizes && layer.size() != values.size())
-	{
-		std::string s = "invalid argument; layer size(" + std::to_string(layer.size()) + ") doesn't equal values size(" + std::to_string(values.size()) + ")" ;
-		throw std::invalid_argument(s);
-	}
+	return layer.at(i).getValue();
+}
+void neuralLayer::setValues(std::vector<double> values)
+{
 	for (int i = 0; i < layer.size() && i < values.size(); i++)
 	{
 		layer.at(i).setValue(values.at(i));
@@ -53,8 +54,24 @@ void neuralLayer::setValues(std::vector<double> values, bool acceptDifferentSize
 }
 void neuralLayer::updateValues(std::vector <double> prevValues)
 {
-	for (cell c : layer)
+	for (int i = 0; i < layer.size(); i++)
 	{
-		c.updateValue(prevValues);
+		layer[i].updateValue(prevValues);
 	}
+}
+neuralLayer *neuralLayer::getPreviousLayer()
+{
+	return prevLayer;
+}
+void neuralLayer::backPropagate(neuralLayer *prev, neuralLayer *outputLayer, double sumOutput, std::vector <double> error, double sumError, bool isOutput)
+{
+	for (int i = 0; i < layer.size(); i++)
+	{
+		layer.at(i).backPropagate(prev, outputLayer, sumOutput, error, sumError, isOutput, i);
+	}
+	if (!isOutput)
+		for (cell c : layer)
+		{
+			c.updateWeights();
+		}
 }

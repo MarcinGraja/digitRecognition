@@ -10,28 +10,37 @@ neuralNet::neuralNet(std::vector<int> dimensions)
 	}
 	for (int i = 0; i < dimensions.size(); i++)
 	{
-		layers.push_back(neuralLayer(dimensions.at(i)));
+		layers.push_back(neuralLayer(dimensions.at(i), i > 0? &layers[i-1] : nullptr));
 	}
 }
 std::vector <double>neuralNet::run(std::vector <double> data)
 {
-	layers.at(0).setValues(data, true);
+	layers.at(0).setValues(data);
 	for (int i = 1; i < layers.size(); i++)
 	{
 		layers.at(i).updateValues(layers.at(i - 1).getValues());
+
 	}
 	return layers.at(layers.size()-1).getValues();
 }
-void neuralNet::initWeights()
+void neuralNet::backPropagate(std::vector <double> error)
 {
+	double sumError = 0;
+	double sumOutput = 0;
+	for (double d : error)
+	{
+		sumError += d;
+	}
+	for (double d : layers.back().getValues())
+	{
+		sumOutput += d;
+	}
 	for (int i = 1; i < layers.size(); i++)
 	{
-		for (int j = 0; j < layers.at(j).size(); j++)
-		{
-			layers.at(i).initWeights((int)layers.at(i-1).size());
-		}
+		layers.at(i).backPropagate(&layers.at(i-1), &layers.back(), sumError, error, sumError, i == layers.size() - 1);
 	}
 }
+
 neuralNet::~neuralNet()
 {
 }
