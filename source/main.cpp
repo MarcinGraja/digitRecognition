@@ -1,20 +1,8 @@
-#include <fstream>
-#include <ctime>
-#include <random>
-#include <fstream>
 #include <iostream>
 #include <string>
-#include "NeuralNet.h"
-#include "train.h"
 #include <vector>
+#include "train.h"
 //image source http://yann.lecun.com/exdb/mnist/
-void debug(std::string Message)
-{
-	//std::cout << Message << '\n';
-	return;
-}
-
-
 int main()
 {
 	std::vector<int> dimensions;
