@@ -1,5 +1,6 @@
 #pragma once
 #include <Eigen/core>
+#include <vector>
 class NeuralNetwork
 {
 	std::vector <Eigen::Matrix<double, -1, -1>, Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1>>> weights;

@@ -37,5 +37,3 @@ x64/
 *.nr5~
 *.user
 *.filters
-*.vcxproj
-*.sln
