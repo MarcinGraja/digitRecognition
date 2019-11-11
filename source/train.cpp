@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "NeuralNetwork.h"
 #include "train.h"
+#include "Eigen/core"
 train::train(std::vector<int> dimensions)
 {
 	this->dimensions = dimensions;
@@ -62,21 +63,28 @@ void train::start(int runs)
 	int *labels = fetchLabels(labelsFstream, trainingSetSize);
 	NeuralNetwork network(dimensions);
 	int hit = 0;
-	int checkingPeriod = 1000;
+	int checkingPeriod = 10000;
 	for (int i = 0; i < runs; i++)
 	{
 		for (int j = 0; j < trainingSetSize; j++)
 		{
 			if (j % checkingPeriod == 0 && j != 0)
 			{
-				std::cout << "current image: " << j << "\thitrate: " << hit / checkingPeriod << '\n';
+				std::cout << "current image: " << j << "\thitrate: " << (double)hit / checkingPeriod << '\n';
 				hit = 0;
+				std::cout << network.getWeights().at(1).col(0);
 			}
-			Eigen::RowVectorXd expectedOutput(10);
+			Eigen::VectorXd expectedOutput(10);
 			expectedOutput.setZero();
 			expectedOutput(labels[j]) = 1;
-			Eigen::MatrixXd input = Eigen::Map<Eigen::Matrix<double, 1, 28*28>>(data, 28*28);
-			network.run(input, expectedOutput);
+			Eigen::MatrixXd input = Eigen::Map<Eigen::Matrix<double, 28*28, 1>>(data+j*28*28, 28*28);
+			Eigen::VectorXd output = network.run(input, expectedOutput);
+			Eigen::Index maxIndex;
+			output.maxCoeff(&maxIndex);
+			if (labels[j] == maxIndex)
+			{
+				hit++;
+			}
 		}
 	}
 }
