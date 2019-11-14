@@ -51,10 +51,14 @@ class NeuralNetwork
 	vectorHandler activationsDerivatives;
 	vectorHandler error;
 	vectorHandler weights;
-	void backPropagate(double error);
+	Eigen::VectorXd averageLastLayerError;
+	int errorCount = 0;
 public:
 	NeuralNetwork(const std::vector<int>& dimensions);
-	std::vector<Eigen::Matrix<double, -1, -1>, Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1>>> getWeights();
 	Eigen::VectorXd run(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput);
+	std::vector<Eigen::Matrix<double, -1, -1>, Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1>>> getWeights();
+	Eigen::VectorXd getAverageLastLayerError();
+	Eigen::VectorXd backpropagate(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput);
 	~NeuralNetwork();
+	void resetAverageLastLayerError();
 };
