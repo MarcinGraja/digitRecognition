@@ -9,6 +9,8 @@
 #include "NeuralNetwork.h"
 #include "train.h"
 #include "Eigen/core"
+#include <chrono>
+typedef std::chrono::high_resolution_clock Clock;
 train::train(std::vector<int> dimensions)
 {
 	this->dimensions = dimensions;
@@ -64,27 +66,45 @@ void train::start(int runs)
 	NeuralNetwork network(dimensions);
 	int hit = 0;
 	int checkingPeriod = 10000;
+	
+	
 	for (int i = 0; i < runs; i++)
 	{
+		auto runStart = Clock::now();
+		auto lastUpdate = Clock::now();
+		int totalHit = 0;
 		for (int j = 0; j < trainingSetSize; j++)
 		{
-			if (j % checkingPeriod == 0 && j != 0)
+
+			if ((j+1) % 10000 == 0 && false)
 			{
-				std::cout << "current image: " << j << "\thitrate: " << (double)hit / checkingPeriod << '\n';
+				auto currentUpdate = Clock::now();
+				std::cout << "current image: " << (j+1) << "\thitrate: " << (double)hit / checkingPeriod << '\n';
 				hit = 0;
-				std::cout << network.getWeights().at(1).col(0);
+				std::cout << network.getWeights().at(1).col(0) << '\n';
+				auto t2 = Clock::now();
+				std::cout << "time of batch: "
+					<< std::chrono::duration_cast<std::chrono::nanoseconds>(currentUpdate - lastUpdate).count() / 1e9
+					<< " seconds" << std::endl;
+				lastUpdate = Clock::now();
 			}
 			Eigen::VectorXd expectedOutput(10);
 			expectedOutput.setZero();
 			expectedOutput(labels[j]) = 1;
-			Eigen::MatrixXd input = Eigen::Map<Eigen::Matrix<double, 28*28, 1>>(data+j*28*28, 28*28);
+			Eigen::VectorXd input = Eigen::Map<Eigen::Matrix<double, 28*28, 1>>(data+j*28*28, 28*28);
 			Eigen::VectorXd output = network.run(input, expectedOutput);
 			Eigen::Index maxIndex;
 			output.maxCoeff(&maxIndex);
 			if (labels[j] == maxIndex)
 			{
 				hit++;
+				totalHit++;
 			}
 		}
+		std::cout << "time of run: "
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
+			<< " seconds" << std::endl;
+		std::cout << "total hit rate:" << (double)totalHit / trainingSetSize << '\n';
+		lastUpdate = Clock::now();
 	}
 }
