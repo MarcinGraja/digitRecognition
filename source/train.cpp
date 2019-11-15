@@ -23,12 +23,15 @@ train::train(std::vector<int> dimensions) : network(NeuralNetwork(dimensions))
 		std::cerr << "data or labels not loaded; Data open:  " << dataFstream.is_open() << "labels open: " << labelsFstream.is_open() << '\n';
 		return;
 	}
+	else
+	{
+		std::cerr << "data and labels loaded sucessfully\n";
+	}
 	dataFstream.seekg(16);
 	labelsFstream.seekg(8);
 	trainingData = fetchData(dataFstream, dimensions.at(0), trainingSetSize);
 	trainingLabels = fetchLabels(labelsFstream, trainingSetSize);
 }
-
 train::~train()
 {
 }
@@ -112,11 +115,10 @@ void train::start(int runs)
 				
 			}
 		}
-		printHitrateInRange(0, trainingSetSize);
 		std::cout << "run " << i << " took "
 			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
 			<< " seconds\n\n";
-		printHitrateInRange(0, trainingSetSize);
+		if (i%10) printHitrateInRange(0, trainingSetSize);
 		runStart = Clock::now();
 	}
 }
