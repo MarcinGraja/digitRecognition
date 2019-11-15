@@ -61,7 +61,7 @@ Eigen::VectorXd NeuralNetwork::run(const Eigen::Ref <Eigen::MatrixXd> &in, const
 Eigen::VectorXd NeuralNetwork::backpropagate(const Eigen::Ref <Eigen::MatrixXd> &in, const Eigen::VectorXd &expectedOutput)
 {
 	int networkSize = activations.size();
-	double learningRate = 0.5;
+	double learningRate = 0.03;
 	activations.at(0) = in;
 	activations.at(0) = activations.at(0).unaryExpr(&sigmoid);
 	for (int i = 1; i <= weights.size(); i++)

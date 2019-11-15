@@ -1,11 +1,12 @@
 #pragma once
 #include <vector>
+#include "NeuralNetwork.h"
 class train
 {
 	std::vector <int> dimensions;
 	int trainingSetSize;
-	double *data;
-	int *labels;
+	double *trainingData;
+	int *trainingLabels;
 	NeuralNetwork network;
 public:
 	train(std::vector <int> dimensions);

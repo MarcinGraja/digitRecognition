@@ -10,11 +10,11 @@
 #include "train.h"
 #include "Eigen/core"
 #include <chrono>
+#define NOTIFY_FREQUENTLY false
 typedef std::chrono::high_resolution_clock Clock;
-train::train(std::vector<int> dimensions)
+train::train(std::vector<int> dimensions) : network(NeuralNetwork(dimensions))
 {
 	this->dimensions = dimensions;
-	network = NeuralNetwork(dimensions);
 	trainingSetSize = 60000;
 	std::ifstream dataFstream("data/train-images.idx3-ubyte", std::fstream::binary);
 	std::ifstream labelsFstream("data/train-labels.idx1-ubyte", std::fstream::binary);
@@ -25,8 +25,8 @@ train::train(std::vector<int> dimensions)
 	}
 	dataFstream.seekg(16);
 	labelsFstream.seekg(8);
-	data = fetchData(dataFstream, dimensions.at(0), trainingSetSize);
-	labels = fetchLabels(labelsFstream, trainingSetSize);
+	trainingData = fetchData(dataFstream, dimensions.at(0), trainingSetSize);
+	trainingLabels = fetchLabels(labelsFstream, trainingSetSize);
 }
 
 train::~train()
@@ -65,76 +65,58 @@ void train::printHitrateInRange(int start, int end)
 {
 	auto startTime = Clock::now();
 	Eigen::Index maxIndex;
-	Eigen::VectorXd input = Eigen::Map<Eigen::Matrix<double, 28 * 28, 1>>(data + (j - k) * 28 * 28, 28 * 28);
+	Eigen::VectorXd input;
 	Eigen::VectorXd expectedOutput(10);
-	expectedOutput.setZero();
-	expectedOutput(labels[j - k]) = 1;
-	Eigen::VectorXd output = network.run(input, expectedOutput);
-	output.maxCoeff(&maxIndex);
+	Eigen::VectorXd output;
 	int hit = 0;
-
 	for (int i = start; i < end; i++)
 	{
-		if (labels[j - k] == maxIndex)
+		input = Eigen::Map<Eigen::VectorXd>(trainingData + i * 28 * 28, 28 * 28);
+		expectedOutput.setZero();
+		expectedOutput(trainingLabels[i]) = 1;
+		output = network.run(input, expectedOutput);
+		output.maxCoeff(&maxIndex);
+		if (trainingLabels[i] == maxIndex)
 		{
 			hit++;
 		}
 	}
 	std::cout << "range:(" << start << "," << end << ")" << "\thitrate: " << hit << "/" << end-start << "=" << (double)hit / (end-start) << '\n';
-	std::cout << "hitcount:" << hit << '\n';
-	auto currentUpdate = Clock::now();
-	std::cout << network.getAverageLastLayerError() << '\n';
+	std::cout << network.getAverageLastLayerError().transpose() << '\n';
 	network.resetAverageLastLayerError();
-	auto t2 = Clock::now();
-	std::cout << "time of batch: "
-		<< std::chrono::duration_cast<std::chrono::nanoseconds>(currentUpdate - Clock::now()).count() / 1e9
-		<< " seconds" << std::endl;
+	std::cout << "testing took "
+		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime).count() / 1e9
+		<< " seconds\n";
 }
 void train::start(int runs)
 {
-	
-	const int checkingPeriod = 2;
-	const int sameImageRepeat = 100;
-	int hit = 0;
-
+	const int checkingPeriod = 10000;
 	for (int i = 0; i < runs; i++)
 	{
+		auto runStart = Clock::now();
+		auto batchStart = Clock::now();
 		for (int j = 0; j < trainingSetSize; j++)
 		{
 			Eigen::VectorXd expectedOutput(10);
 			expectedOutput.setZero();
-			expectedOutput(labels[j]) = 1;
-			Eigen::VectorXd input = Eigen::Map<Eigen::Matrix<double, 28*28, 1>>(data+j*28*28, 28*28);
-			Eigen::VectorXd output;
-			for (int k = 0; k < sameImageRepeat; k++)
+			expectedOutput(trainingLabels[j]) = 1;
+			Eigen::VectorXd input = Eigen::Map<Eigen::VectorXd>(trainingData+j*28*28, 28*28);
+			network.backpropagate(input, expectedOutput);
+			if (NOTIFY_FREQUENTLY && (j + 1) % checkingPeriod == 0)
 			{
-				output = network.backpropagate(input, expectedOutput);
+				auto batchEnd = Clock::now();
+				printHitrateInRange(j - checkingPeriod + 1, j);
+				std::cout << "batch took " 
+					<< std::chrono::duration_cast<std::chrono::nanoseconds>(batchEnd - batchStart).count() / 1e9 << "seconds\n\n";
+				batchStart = Clock::now();
 				
 			}
-			if ((j + 1) % checkingPeriod == 0)
-			{
-				printHitrateInRange(j - checkingPeriod, j);
-				break;
-			}
 		}
-		int totalHit = 0;
-		//for (int j = 0; j < trainingSetSize; j++)
-		//{
-		//	Eigen::VectorXd input = Eigen::Map<Eigen::Matrix<double, 28 * 28, 1>>(data + j * 28 * 28, 28 * 28);
-		//	Eigen::VectorXd output;
-		//	output = network.run(input);
-		//	Eigen::Index maxIndex;
-		//	output.maxCoeff(&maxIndex);
-		//	if (labels[j] == maxIndex)
-		//	{
-		//		hit++;
-		//		totalHit++;
-		//	}
-		//}
-		//std::cout << "time of run: "
-		//	<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
-		//	<< " seconds" << std::endl;
-		//std::cout << "total hit rate:" << (double)totalHit / trainingSetSize << '\n';
-		//lastUpdate = Clock::now();
+		printHitrateInRange(0, trainingSetSize);
+		std::cout << "run " << i << " took "
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
+			<< " seconds\n\n";
+		printHitrateInRange(0, trainingSetSize);
+		runStart = Clock::now();
 	}
 }
