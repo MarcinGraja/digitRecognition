@@ -41,16 +41,12 @@ double *train::fetchData(std::ifstream & data, int itemSize, int itemCount)
 	data.read(reinterpret_cast<char *> (c), itemSize * itemCount);
 
 	double *output = new double[itemSize*itemCount];
-	for (int i = 0; i < itemCount; i++)
+	for (int i = 0; i < itemSize * itemCount; i++)
 	{
-		std::vector <double> v;
-		v.reserve(itemSize);
-		for (int j = 0; j < itemSize; j++)
-		{
-			output[i] = (c[i * itemSize + j]-128) / 128.0;
-		}
+			output[i] = c[i];
 	}
 	delete[] c;
+	std::cout << "data fetched\n";
 	return output;
 }
 int *train::fetchLabels(std::ifstream &labels, int itemCount)
@@ -62,6 +58,7 @@ int *train::fetchLabels(std::ifstream &labels, int itemCount)
 		labels.read(&label, 1);
 		output[i] = label;
 	}
+	std::cout << "labels fetched\n";
 	return output;
 }
 void train::printHitrateInRange(int start, int end)
@@ -84,16 +81,22 @@ void train::printHitrateInRange(int start, int end)
 			hit++;
 		}
 	}
-	std::cout << "range:(" << start << "," << end << ")" << "\thitrate: " << hit << "/" << end-start << "=" << (double)hit / (end-start) << '\n';
-	std::cout << network.getAverageLastLayerError().transpose() << '\n';
+	std::cout << "range:(" << start << "," << end << ")" << "\thitrate: " << hit << "/" << end-start+1 << "=" << (double)hit / (end-start) << '\n';
+	std::cout << "average error:\t" << network.getAverageLastLayerError().transpose().sum()/10 << '\n';
 	network.resetAverageLastLayerError();
 	std::cout << "testing took "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime).count() / 1e9
 		<< " seconds\n";
+	if (0)
+	{
+		std::cout << "weights:\n" << network.getWeights().back().col(0).transpose() << '\n';
+	}
 }
 void train::start(int runs)
 {
-	const int checkingPeriod = 10000;
+	const int checkingPeriod = 60000;
+	std::cout << "before training:\n";
+	printHitrateInRange(0, trainingSetSize-1);
 	for (int i = 0; i < runs; i++)
 	{
 		auto runStart = Clock::now();
@@ -105,20 +108,24 @@ void train::start(int runs)
 			expectedOutput(trainingLabels[j]) = 1;
 			Eigen::VectorXd input = Eigen::Map<Eigen::VectorXd>(trainingData+j*28*28, 28*28);
 			network.backpropagate(input, expectedOutput);
-			if (NOTIFY_FREQUENTLY && (j + 1) % checkingPeriod == 0)
+			if (NOTIFY_FREQUENTLY && (j + 1) % checkingPeriod == 0 && false)
 			{
 				auto batchEnd = Clock::now();
 				printHitrateInRange(j - checkingPeriod + 1, j);
 				std::cout << "batch took " 
 					<< std::chrono::duration_cast<std::chrono::nanoseconds>(batchEnd - batchStart).count() / 1e9 << "seconds\n\n";
 				batchStart = Clock::now();
-				
 			}
+			
 		}
-		std::cout << "run " << i << " took "
+		std::cout << "\nrun " << i << " took "
 			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
-			<< " seconds\n\n";
-		if (i%10) printHitrateInRange(0, trainingSetSize);
+			<< " seconds\n";
+		if ((i % 1 == 0) || NOTIFY_FREQUENTLY)
+		{
+			printHitrateInRange(0, trainingSetSize-1);
+		}
+		network.updateLearningRate(i);
 		runStart = Clock::now();
 	}
 }
