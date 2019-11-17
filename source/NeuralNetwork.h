@@ -55,10 +55,11 @@ class NeuralNetwork
 	vectorHandler error;
 	vectorHandler weights;
 	Eigen::VectorXd averageLastLayerError;
-	double learningRate = 0.01;
+	const double initialLearningRate;
+	double learningRate;
 	int errorCount = 0;
 public:
-	NeuralNetwork(const std::vector<int>& dimensions);
+	NeuralNetwork(const std::vector<int>& dimensions, double startingLearningRate = 0.03);
 	Eigen::VectorXd run(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput);
 	std::vector<Eigen::Matrix<double, -1, -1>, Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1>>> getWeights();
 	Eigen::VectorXd getAverageLastLayerError();

@@ -61,7 +61,7 @@ int *train::fetchLabels(std::ifstream &labels, int itemCount)
 	std::cout << "labels fetched\n";
 	return output;
 }
-void train::printHitrateInRange(int start, int end)
+double train::printHitrateInRange(int start, int end)
 {
 	auto startTime = Clock::now();
 	Eigen::Index maxIndex;
@@ -91,12 +91,15 @@ void train::printHitrateInRange(int start, int end)
 	{
 		std::cout << "weights:\n" << network.getWeights().back().col(0).transpose() << '\n';
 	}
+	return (double)hit / (end - start + 1);
 }
 void train::start(int runs)
 {
 	const int checkingPeriod = 60000;
 	std::cout << "before training:\n";
 	printHitrateInRange(0, trainingSetSize-1);
+	int learningRateDecrementedCount = 0;
+	double prevHitrate = 0;
 	for (int i = 0; i < runs; i++)
 	{
 		auto runStart = Clock::now();
@@ -121,11 +124,12 @@ void train::start(int runs)
 		std::cout << "\nrun " << i << " took "
 			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
 			<< " seconds\n";
-		if ((i % 1 == 0) || NOTIFY_FREQUENTLY)
+		double currentHitrate = printHitrateInRange(0, trainingSetSize - 1);
+		if (prevHitrate > currentHitrate)
 		{
-			printHitrateInRange(0, trainingSetSize-1);
+			network.updateLearningRate(++learningRateDecrementedCount);
 		}
-		network.updateLearningRate(i);
+		prevHitrate = currentHitrate;
 		runStart = Clock::now();
 	}
 }

@@ -15,8 +15,10 @@ double sigmoidDerivative(const double &x)
 	//return x > 0? 1 : 0.01;
 	return  x * (1 - x);
 }
-NeuralNetwork::NeuralNetwork(const std::vector <int> &dimensions) : activations(0), activationsDerivatives(0)/**/, error(1), weights(1)
+NeuralNetwork::NeuralNetwork(const std::vector <int> &dimensions, double startingLearningRate)
+	: initialLearningRate(startingLearningRate),activations(0), activationsDerivatives(0), error(1), weights(1)
 {
+	learningRate = initialLearningRate;
 	for (int i = 0; i < dimensions.size()-1; i++)
 	{
 		weights.push_back(Eigen::MatrixXd::Random(dimensions.at(i+1), dimensions.at(i)));
