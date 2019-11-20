@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <iomanip>
+#include "Adam.h"
 double sigmoid(const double &x)
 {
 	//return x > 0 ? x : 0.01*x;
@@ -16,12 +17,13 @@ double sigmoidDerivative(const double &x)
 	return  x * (1 - x);
 }
 NeuralNetwork::NeuralNetwork(const std::vector <int> &dimensions, double startingLearningRate)
-	: initialLearningRate(startingLearningRate),activations(0), activationsDerivatives(0), error(1), weights(1)
+	: learningRate(1),activations(0), activationsDerivatives(0), error(1), weights(1), adam(Adam(dimensions))
 {
-	learningRate = initialLearningRate;
 	for (int i = 0; i < dimensions.size()-1; i++)
 	{
 		weights.push_back(Eigen::MatrixXd::Random(dimensions.at(i+1), dimensions.at(i)));
+		learningRate.push_back(Eigen::MatrixXd(dimensions.at(i + 1), dimensions.at(i)));
+		learningRate.back().fill(0.05);
 	}
 	activations.resize(dimensions.size());
 	activationsDerivatives.resize(dimensions.size());
@@ -40,7 +42,7 @@ Eigen::VectorXd NeuralNetwork::run(const Eigen::Ref <Eigen::MatrixXd> &in, const
 	errorCount++;
 	return activations.back();
 }
-Eigen::VectorXd NeuralNetwork::backpropagate(const Eigen::Ref <Eigen::MatrixXd> &in, const Eigen::VectorXd &expectedOutput, bool debug)
+Eigen::VectorXd NeuralNetwork::backpropagate(const Eigen::Ref <Eigen::MatrixXd> &in, const Eigen::VectorXd &expectedOutput, bool updateWeights, bool debug)
 {
 	int networkSize = activations.size();
 	activations.at(0) = in;
@@ -58,16 +60,14 @@ Eigen::VectorXd NeuralNetwork::backpropagate(const Eigen::Ref <Eigen::MatrixXd> 
 		//cwiseProduct- multiplies corresponding elements from matrices
 		error.at(i) = activationsDerivatives.at(i).cwiseProduct(weights.at(i + 1).transpose()* error.at(i + 1));	
 	}
+	if (updateWeights) learningRate.setVector(adam.getLearningRates());
+	vectorHandler weightsDerivatives(1);
 	for (int i = 1; i <= weights.size(); i++)
 	{
-		weights.at(i) -= (learningRate * error.at(i)) * activations.at(i - 1).transpose();
-		if (i == weights.size())
-		{
-			//auto delta = learningRate * error.at(i) * activations.at(i - 1).transpose();
-			//std::cout << delta.transpose();
-			//std::cin.ignore();
-		}
+		weightsDerivatives.push_back(error.at(i) * activations.at(i - 1).transpose());
+		weights.at(i) -= learningRate.at(i).cwiseProduct(weightsDerivatives.at(i));
 	}
+	if (updateWeights) adam.update(weightsDerivatives.getVector());
 	return activations.back();
 }
 std::vector <Eigen::MatrixXd, Eigen::aligned_allocator<Eigen::MatrixXd>> NeuralNetwork::getWeights()

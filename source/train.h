@@ -7,6 +7,8 @@ class train
 	int trainingSetSize;
 	double *trainingData;
 	int *trainingLabels;
+	double *testingData;
+	int *testingLabels;
 	NeuralNetwork network;
 public:
 	train(std::vector <int> dimensions);

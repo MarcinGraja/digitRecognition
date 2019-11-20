@@ -125,11 +125,13 @@
     <None Include="train-labels.idx1-ubyte" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="source\Adam.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\NeuralNetwork.cpp" />
     <ClCompile Include="source\train.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\Adam.h" />
     <ClInclude Include="source\NeuralNetwork.h" />
     <ClInclude Include="source\train.h" />
   </ItemGroup>

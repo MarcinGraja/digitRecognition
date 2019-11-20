@@ -3,12 +3,11 @@
 #include <vector>
 #include <iostream>
 #include <cmath>
-#define type Eigen::MatrixXd
-#define allocator Eigen::aligned_allocator<Eigen::MatrixXd>
+#include "adam.h"
 class NeuralNetwork
 {	
-	#define type Eigen::MatrixXd
-	#define allocator Eigen::aligned_allocator<Eigen::MatrixXd>
+#define type Eigen::MatrixXd
+#define allocator Eigen::aligned_allocator<Eigen::MatrixXd>
 	class vectorHandler
 	{
 		int offset;
@@ -46,29 +45,29 @@ class NeuralNetwork
 		{
 			return v;
 		}
-		
+		void setVector(std::vector <type, allocator> v)
+		{
+			this->v = v;
+		}
+
 	};
-	#undef type
-	#undef allocator
+#undef type
+#undef allocator
 	vectorHandler activations;
 	vectorHandler activationsDerivatives;
 	vectorHandler error;
 	vectorHandler weights;
 	Eigen::VectorXd averageLastLayerError;
-	const double initialLearningRate;
-	double learningRate;
+	Adam adam;
+	vectorHandler learningRate;
 	int errorCount = 0;
+
 public:
 	NeuralNetwork(const std::vector<int>& dimensions, double startingLearningRate = 0.03);
 	Eigen::VectorXd run(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput);
 	std::vector<Eigen::Matrix<double, -1, -1>, Eigen::aligned_allocator<Eigen::Matrix<double, -1, -1>>> getWeights();
 	Eigen::VectorXd getAverageLastLayerError();
-	Eigen::VectorXd backpropagate(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput, bool debug = false);
+	Eigen::VectorXd backpropagate(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput, bool updateWeights, bool debug = false);
 	~NeuralNetwork();
 	void resetAverageLastLayerError();
-	void updateLearningRate(int run)
-	{
-		learningRate = 0.01 * std::exp(-0.05*run);
-		std::cout << "learning rate set to \t" << learningRate << '\n';
-	}
 };

@@ -87,49 +87,33 @@ double train::printHitrateInRange(int start, int end)
 	std::cout << "testing took "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime).count() / 1e9
 		<< " seconds\n";
-	if (0)
-	{
-		std::cout << "weights:\n" << network.getWeights().back().col(0).transpose() << '\n';
-	}
 	return (double)hit / (end - start + 1);
 }
 void train::start(int runs)
 {
 	const int checkingPeriod = 60000;
-	std::cout << "before training:\n";
-	printHitrateInRange(0, trainingSetSize-1);
-	int learningRateDecrementedCount = 0;
-	double prevHitrate = 0;
+	//std::cout << "before training:\n";
+	//printHitrateInRange(0, trainingSetSize-1);
 	for (int i = 0; i < runs; i++)
 	{
 		auto runStart = Clock::now();
 		auto batchStart = Clock::now();
 		for (int j = 0; j < trainingSetSize; j++)
 		{
+			if (j % 6000 == 0)
+			{
+				std::cout << 100.0*j / 60000 << "%...";
+			}
 			Eigen::VectorXd expectedOutput(10);
 			expectedOutput.setZero();
 			expectedOutput(trainingLabels[j]) = 1;
 			Eigen::VectorXd input = Eigen::Map<Eigen::VectorXd>(trainingData+j*28*28, 28*28);
-			network.backpropagate(input, expectedOutput);
-			if (NOTIFY_FREQUENTLY && (j + 1) % checkingPeriod == 0 && false)
-			{
-				auto batchEnd = Clock::now();
-				printHitrateInRange(j - checkingPeriod + 1, j);
-				std::cout << "batch took " 
-					<< std::chrono::duration_cast<std::chrono::nanoseconds>(batchEnd - batchStart).count() / 1e9 << "seconds\n\n";
-				batchStart = Clock::now();
-			}
-			
+			network.backpropagate(input, expectedOutput, j == (trainingSetSize-1));
 		}
-		std::cout << "\nrun " << i << " took "
+		std::cout << "\n\nrun " << i << " took "
 			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - runStart).count() / 1e9
 			<< " seconds\n";
-		double currentHitrate = printHitrateInRange(0, trainingSetSize - 1);
-		if (prevHitrate > currentHitrate)
-		{
-			network.updateLearningRate(++learningRateDecrementedCount);
-		}
-		prevHitrate = currentHitrate;
+		printHitrateInRange(0, trainingSetSize - 1);
 		runStart = Clock::now();
 	}
 }

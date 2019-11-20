@@ -9,7 +9,7 @@ int main()
 	dimensions.push_back(28 * 28);
 	dimensions.push_back(128);
 	dimensions.push_back(10);
-	int runs = 200000;
+	int runs = 5;
 	train trainer(dimensions);
 	std::cout << "runs:\n";
 	std::cout << runs;
