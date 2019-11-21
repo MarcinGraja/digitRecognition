@@ -1,18 +1,24 @@
 #pragma once
 #include <vector>
+#include <fstream>
 #include "NeuralNetwork.h"
 class train
 {
 	std::vector <int> dimensions;
 	int trainingSetSize;
+	int testingSetSize;
 	double *trainingData;
 	int *trainingLabels;
-	NeuralNetwork network;
+	double *testingData;
+	int *testingLabels;
+	std::ofstream log;
+	std::ofstream csvLog;
 public:
-	train(std::vector <int> dimensions);
+	train(std::vector<int> dimensions, int trainingSetSize, int testingSetSize);
 	~train();
-	double * fetchData(std::ifstream & data, int itemSize, int itemCount);
-	int * fetchLabels(std::ifstream & labels, int itemCount);
-	double printHitrateInRange(int start, int end);
-	void start(int runs);
+	double printHitrateInRange(int start, int end, NeuralNetwork network, std::string m, std::string csvM);
+	void run(int runs, int batch);
+	void findHyperParameters(int runs);
+	void backpropagate(NeuralNetwork & network, double base, double step, int runs, int currentRun, double & returned);
+	void probTrashChoosesOptimalLearningRate(double runs);
 };

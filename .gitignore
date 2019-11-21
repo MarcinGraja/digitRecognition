@@ -37,3 +37,5 @@ x64/
 *.nr5~
 *.user
 *.filters
+/log.csv
+/log.txt

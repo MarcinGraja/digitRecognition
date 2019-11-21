@@ -46,6 +46,12 @@ class NeuralNetwork
 		{
 			return v;
 		}
+		vectorHandler &operator=(const vectorHandler &other)
+		{
+			this->v = other.v;
+			this->offset = other.offset;
+			return *this;
+		}
 		
 	};
 	#undef type
@@ -66,9 +72,23 @@ public:
 	Eigen::VectorXd backpropagate(const Eigen::Ref<Eigen::MatrixXd>& in, const Eigen::VectorXd & expectedOutput, bool debug = false);
 	~NeuralNetwork();
 	void resetAverageLastLayerError();
-	void updateLearningRate(int run)
+	NeuralNetwork &operator=(const NeuralNetwork &other)
 	{
-		learningRate = 0.01 * std::exp(-0.05*run);
-		std::cout << "learning rate set to \t" << learningRate << '\n';
+		this->activations = other.activations;
+		this->activationsDerivatives = other.activationsDerivatives;
+		this->error = other.error;
+		this->weights = other.weights;
+		this->averageLastLayerError = other.averageLastLayerError;
+		this->learningRate = other.learningRate;
+		return *this;
+	}
+	void updateLearningRate(double base, double step, int x)
+	{
+		learningRate = base * std::exp(-step*x);
+		//std::cout << "learning rate set to \t" << learningRate << '\n';
+	}
+	double getLearningRate()
+	{
+		return learningRate;
 	}
 };

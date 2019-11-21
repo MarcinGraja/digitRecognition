@@ -9,11 +9,15 @@ int main()
 	dimensions.push_back(28 * 28);
 	dimensions.push_back(128);
 	dimensions.push_back(10);
-	int runs = 200000;
-	train trainer(dimensions);
+	int runs = 1000;
+	train trainer(dimensions, 60000, 10000);
 	std::cout << "runs:\n";
 	std::cout << runs;
 	std::cout << "\n";
-	trainer.start(runs);
-	std::cin.ignore();
+	trainer.run(runs, 5);
+	std::cout << "finito";
+	while (true)
+	{
+		std::cin.ignore();
+	}
 }

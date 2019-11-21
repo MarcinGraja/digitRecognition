@@ -120,6 +120,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="data\t10k-images.idx3-ubyte" />
+    <None Include="data\t10k-labels.idx1-ubyte" />
     <None Include="packages.config" />
     <None Include="train-images.idx3-ubyte" />
     <None Include="train-labels.idx1-ubyte" />
@@ -130,6 +132,7 @@
     <ClCompile Include="source\train.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\dataLoader.h" />
     <ClInclude Include="source\NeuralNetwork.h" />
     <ClInclude Include="source\train.h" />
   </ItemGroup>
