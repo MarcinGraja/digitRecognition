@@ -138,7 +138,7 @@ void train::backpropagate(NeuralNetwork &network, double base, double step, int 
 	}
 	std::string message = "current learning rate: " + std::to_string(network.getLearningRate()) + " base:\t " + std::to_string(base) + "\tstep:\t" + std::to_string(step) + '\n';
 	std::string csvMessage = std::to_string(network.getLearningRate()) + ";" + std::to_string(base) + ";" + std::to_string(step) + ";";
-	std::cout << "run" << currentRun + runs << ":" << runs << " runs took "
+	std::cout << runs << " runs took "
 		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count() / 1e9 << '\n';
 	returned = printHitrateInRange(0, testingSetSize - 1, network, message, csvMessage);
 }
