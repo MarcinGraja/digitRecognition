@@ -33,7 +33,7 @@ train::~train()
 {
 }
 
-double train::printHitrateInRange(int start, int end, NeuralNetwork network, std::string m, std::string csvM)
+double *train::printHitrateInRange(int start, int end, NeuralNetwork network, std::string m, std::string csvM)
 {
 	auto startTime = Clock::now();
 	Eigen::Index maxIndex;
@@ -41,6 +41,13 @@ double train::printHitrateInRange(int start, int end, NeuralNetwork network, std
 	Eigen::VectorXd expectedOutput(10);
 	Eigen::VectorXd output;
 	int hit = 0;
+	int numbersCount[10];
+	int perNumberHit[10];
+	for (int i = 0; i < 10; i++)
+	{
+		numbersCount[i] = 0;
+		perNumberHit[i] = 0;
+	}
 	for (int i = start; i < end; i++)
 	{
 		input = Eigen::Map<Eigen::VectorXd>(testingData + i * 28 * 28, 28 * 28);
@@ -48,33 +55,54 @@ double train::printHitrateInRange(int start, int end, NeuralNetwork network, std
 		expectedOutput(testingLabels[i]) = 1;
 		output = network.run(input, expectedOutput);
 		output.maxCoeff(&maxIndex);
+		numbersCount[testingLabels[i]]++;
 		if (testingLabels[i] == maxIndex)
 		{
 			hit++;
+			perNumberHit[testingLabels[i]]++;
 		}
 	}
 	double averageError = network.getAverageLastLayerError().sum() / 10;
-	std::string message = m + ":range:(" + std::to_string(start) + "," + std::to_string(end)
+	std::string message = m + "range:(" + std::to_string(start) + "," + std::to_string(end)
 		+ ")\thitrate: " + std::to_string(hit) + "/" + std::to_string(end - start + 1) + "=" 
 		+ std::to_string((double)hit / (end - start + 1)) + "\n average error:\t" + std::to_string(averageError)
 		+ "\n testing took " + std::to_string(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime).count() / 1e9)
-		+ " seconds\n";
+		+ " seconds\n per number hitrate:\n";
+	double perNumberHitrate[10];
+	double min = 1;
+	int minIndex = 0;
+	for (int i = 0; i < 10; i++)
+	{
+		perNumberHitrate[i] = (double)(perNumberHit[i]) / numbersCount[i];
+		if (perNumberHitrate[i] < min)
+		{
+			min = perNumberHitrate[i];
+			minIndex = i;
+		}
+		message += std::to_string(i) + ":" + std::to_string(perNumberHitrate[i]) + " ";
+	}
+	message += "\nworst: " + std::to_string(minIndex) + "\n\n";
 	std::cout << message;
 	std::string csvMessage = csvM + std::to_string(averageError) + ";" + std::to_string((double)hit / (end - start + 1)) + '\n';
 	log << message;
 	csvLog << csvMessage;
 	network.resetAverageLastLayerError();
-	return averageError;
+	return new double[2]{(double)minIndex, averageError};
 }
-void train::run(int runs, int batch)
+void train::run(int runs)
 {
-	double step = 0.407014;
-	double base = 0.0814027;
+	auto start = Clock::now();
+	double step = 0.4;
+	double base = 0.01;
 	NeuralNetwork net(dimensions);
-	net.updateLearningRate(base, step, 0);
+//	net.updateLearningRate(base, step, 0);
 	double dummy;
-	for (int i = 0; i < runs; i++)
-		backpropagate(net, base, step, batch, i*batch, dummy);
+	backpropagate(net, base, step, runs, dummy);
+	this->log.close();
+	this->csvLog.close();
+	std::cout << "everything took"
+		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count() / 1e9 << '\n';
+
 }
 void train::findHyperParameters(int runs)
 {
@@ -104,7 +132,7 @@ void train::findHyperParameters(int runs)
 		{
 			for (int j = 0; j < 3; j++)
 			{
-				threads.push_back(std::thread(&train::backpropagate, this, std::ref(nets.at(i*3+j)), base[i], step[j], runs, 0, std::ref(returned[i*3+j])));
+				threads.push_back(std::thread(&train::backpropagate, this, std::ref(nets.at(i*3+j)), base[i], step[j], runs, std::ref(returned[i*3+j])));
 			}
 		}
 		double bestError = 1e300;
@@ -121,26 +149,48 @@ void train::findHyperParameters(int runs)
 	}
 	
 }
-void train::backpropagate(NeuralNetwork &network, double base, double step, int runs, int currentRun, double &returned)
+void train::backpropagate(NeuralNetwork &network, double base, double step, int runs, double &returned)
 {
-	auto start = Clock::now();
+	int privilegedNumber = -1;
+	double prevError = 1;
 	for (int j = 0; j < runs; j++)
 	{
-		network.updateLearningRate(base, step, j + currentRun);
+		auto start = Clock::now();
+		int repeated = 0;
+		int t = 0;
 		for (int i = 0; i < trainingSetSize; i++)
 		{
+			//network.updateLearningRate(base, step, j + (double)i/trainingSetSize);
 			Eigen::VectorXd expectedOutput(10);
 			expectedOutput.setZero();
 			expectedOutput(trainingLabels[i]) = 1;
 			Eigen::VectorXd input = Eigen::Map<Eigen::VectorXd>(trainingData + i * 28 * 28, 28 * 28);
 			network.backpropagate(input, expectedOutput);
+			if (trainingLabels[i] == privilegedNumber)
+			{
+				if (++repeated == 10)
+				{
+					t++;
+					network.backpropagate(input, expectedOutput);
+					repeated = 0;
+				}
+			}
 		}
+		std::string message = "current learning rate: " + std::to_string(network.getLearningRate()) + " base:\t " + std::to_string(base) + "\tstep:\t" + std::to_string(step) + '\n';
+		std::string csvMessage = std::to_string(network.getLearningRate()) + ";" + std::to_string(base) + ";" + std::to_string(step) + ";";
+		std::cout << "run " << j << " took:"
+			<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count() / 1e9 << '\n';
+		std::cout << "worst repeated " << t << " times\n";
+		double *out = printHitrateInRange(0, testingSetSize - 1, network, message, csvMessage);
+		privilegedNumber = out[0];
+		if (prevError < out[1])
+		{
+			network.multiplicateLearningRate(0.8);
+		}
+		else network.multiplicateLearningRate(0.9);
+		prevError = out[1];
 	}
-	std::string message = "current learning rate: " + std::to_string(network.getLearningRate()) + " base:\t " + std::to_string(base) + "\tstep:\t" + std::to_string(step) + '\n';
-	std::string csvMessage = std::to_string(network.getLearningRate()) + ";" + std::to_string(base) + ";" + std::to_string(step) + ";";
-	std::cout << "run" << currentRun + runs << ":" << runs << " runs took "
-		<< std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - start).count() / 1e9 << '\n';
-	returned = printHitrateInRange(0, testingSetSize - 1, network, message, csvMessage);
+	
 }
 void train::probTrashChoosesOptimalLearningRate(double runs)
 {

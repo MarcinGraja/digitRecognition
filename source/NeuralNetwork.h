@@ -82,10 +82,15 @@ public:
 		this->learningRate = other.learningRate;
 		return *this;
 	}
-	void updateLearningRate(double base, double step, int x)
+	void updateLearningRate(double base, double step, double x)
 	{
-		learningRate = base * std::exp(-step*x);
+		learningRate = 0.001;
+		//learningRate = base * std::exp(-step*x) + 1e-4;
 		//std::cout << "learning rate set to \t" << learningRate << '\n';
+	}
+	void multiplicateLearningRate(double x)
+	{
+		learningRate *= x;
 	}
 	double getLearningRate()
 	{
